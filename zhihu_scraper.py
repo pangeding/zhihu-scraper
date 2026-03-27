@@ -40,8 +40,11 @@ def scrape_zhihu(url, cookies=None):
 
         soup = BeautifulSoup(response.text, 'html.parser')
         
+        # Check if it's a specific answer URL (/answer/)
+        if '/answer/' in url:
+            return scrape_single_answer(soup)
         # Check if it's a question page (multiple answers)
-        if '/question/' in url:
+        elif '/question/' in url:
             return scrape_question_answers(soup)
         else:
             # It's an article page
@@ -49,6 +52,53 @@ def scrape_zhihu(url, cookies=None):
 
     except requests.exceptions.RequestException as e:
         return f"ERROR: Request failed - {str(e)}"
+
+
+def scrape_single_answer(soup):
+    """Scrape a single answer from an answer URL"""
+    results = []
+    
+    # Try to find the answer container
+    answer_items = soup.find_all('div', class_='List-item')
+    
+    if not answer_items:
+        # Fallback to RichContent
+        answer_items = soup.find_all('div', class_='RichContent')
+    
+    if not answer_items:
+        # Try to find by content directly
+        content_div = soup.find('div', class_='RichContent-inner')
+        if content_div:
+            answer_items = [content_div]
+    
+    print(f"\nFound {len(answer_items)} answer on this page")
+    
+    for i, item in enumerate(answer_items, 1):
+        # Extract answer content
+        content_div = item.find('div', class_='RichContent-inner')
+        if not content_div:
+            content_div = item
+        
+        if content_div:
+            paragraphs = content_div.find_all('p')
+            answer_text = '\n\n'.join(p.get_text(strip=True) for p in paragraphs)
+            
+            # Extract author name
+            author_elem = item.find('a', class_='UserLink-link')
+            if not author_elem:
+                author_elem = item.find('a', class_='zm-item-answer-author-link')
+            author = author_elem.get_text(strip=True) if author_elem else "匿名用户"
+            
+            # Extract vote count
+            vote_elem = item.find('button', class_='VoteButton')
+            votes = vote_elem.get_text(strip=True) if vote_elem else "0"
+            
+            results.append(f"【回答】作者：{author} | 赞同：{votes}\n{answer_text}")
+    
+    if results:
+        return "\n\n" + "="*80 + "\n".join(results) + "\n" + "="*80
+    else:
+        return "ERROR: No answer found on this page"
 
 
 def scrape_question_answers(soup):
