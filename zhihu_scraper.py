@@ -171,7 +171,7 @@ def save_to_file(content, title_prefix=""):
     
     Args:
         content: The content to save
-        title_prefix: Optional prefix for the filename (Chinese characters)
+        title_prefix: Optional prefix for the filename (ignored, uses first 10 chars of content instead)
     
     Returns:
         The output file path
@@ -184,20 +184,29 @@ def save_to_file(content, title_prefix=""):
     # Generate filename with date
     date_str = datetime.now().strftime('%Y-%m-%d')
     
-    # Limit title prefix to first 30 Chinese characters
-    if title_prefix:
-        # Extract Chinese characters (limit to 30)
+    # Extract first 10 Chinese characters from content as title
+    title_part = ""
+    if content:
+        # Remove metadata lines (like "【回答】作者：..." or "====" separators)
+        lines = content.split('\n')
+        clean_content = []
+        for line in lines:
+            # Skip metadata lines and separator lines
+            if not line.startswith('【') and not line.startswith('=') and line.strip():
+                clean_content.append(line)
+        
+        # Join clean content and extract first 10 Chinese characters
+        clean_text = '\n'.join(clean_content)
         chinese_chars = []
-        for char in title_prefix[:200]:  # Check first 200 chars to get enough Chinese
+        for char in clean_text:
             if '\u4e00' <= char <= '\u9fff':  # Unicode range for Chinese characters
                 chinese_chars.append(char)
-                if len(chinese_chars) >= 30:
+                if len(chinese_chars) >= 10:
                     break
         title_part = ''.join(chinese_chars)
-        if title_part:
-            filename = f"{date_str}-{title_part}.md"
-        else:
-            filename = f"{date_str}-zhihu.md"
+    
+    if title_part:
+        filename = f"{date_str}-{title_part}.md"
     else:
         filename = f"{date_str}-zhihu.md"
     

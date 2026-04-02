@@ -27,7 +27,7 @@ uv pip install requests beautifulsoup4
 ```bash
 source .venv/bin/activate
 python zhihu_scraper.py
-echo "https://www.zhihu.com/question/1920630198509995936/answer/2021915304188543089" | python zhihu_scraper.py
+echo "https://www.zhihu.com/question/316703576/answer/2002761706041013660" | python zhihu_scraper.py
 
 ```
 
