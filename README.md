@@ -15,6 +15,9 @@ A Python script to extract main content from Zhihu (知乎) articles.
 
 ## Installation
 
+
+在浏览器的console里搜索document.cookie,然后就可以找到cookie 复制到cookie.txt里
+
 ```bash
 uv pip install requests beautifulsoup4
 ```
@@ -22,7 +25,10 @@ uv pip install requests beautifulsoup4
 ## Usage
 
 ```bash
+source .venv/bin/activate
 python zhihu_scraper.py
+echo "https://www.zhihu.com/question/1920630198509995936/answer/2021915304188543089" | python zhihu_scraper.py
+
 ```
 
 1. Enter the Zhihu article URL when prompted

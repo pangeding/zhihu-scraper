@@ -1,6 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 import os
+from datetime import datetime
 
 
 def load_cookies_from_file(cookie_file='cookie.txt'):
@@ -163,7 +164,51 @@ def scrape_article_content(soup):
         return '\n\n'.join(p.get_text(strip=True) for p in paragraphs)
     else:
         return "ERROR: Content container not found. The page structure may have changed."
+
+
+def save_to_file(content, title_prefix=""):
+    """Save content to data folder with date-based filename
     
+    Args:
+        content: The content to save
+        title_prefix: Optional prefix for the filename (Chinese characters)
+    
+    Returns:
+        The output file path
+    """
+    # Create data directory if it doesn't exist
+    data_dir = 'data'
+    if not os.path.exists(data_dir):
+        os.makedirs(data_dir)
+    
+    # Generate filename with date
+    date_str = datetime.now().strftime('%Y-%m-%d')
+    
+    # Limit title prefix to first 30 Chinese characters
+    if title_prefix:
+        # Extract Chinese characters (limit to 30)
+        chinese_chars = []
+        for char in title_prefix[:200]:  # Check first 200 chars to get enough Chinese
+            if '\u4e00' <= char <= '\u9fff':  # Unicode range for Chinese characters
+                chinese_chars.append(char)
+                if len(chinese_chars) >= 30:
+                    break
+        title_part = ''.join(chinese_chars)
+        if title_part:
+            filename = f"{date_str}-{title_part}.md"
+        else:
+            filename = f"{date_str}-zhihu.md"
+    else:
+        filename = f"{date_str}-zhihu.md"
+    
+    output_file = os.path.join(data_dir, filename)
+    
+    with open(output_file, 'w', encoding='utf-8') as f:
+        f.write(content)
+    
+    return output_file
+
+
 if __name__ == "__main__":
     print("Zhihu Article Scraper")
     print("=====================")
@@ -196,8 +241,12 @@ if __name__ == "__main__":
         print("- Try adding session cookies if the article requires login")
         print("- Update User-Agent if blocked")
     else:
-        output_file = 'zhihu_content1.txt'
-        with open(output_file, 'w', encoding='utf-8') as f:
-            f.write(result)
+        # Extract title from URL or content for filename
+        title_prefix = ""
+        if result and len(result) > 0:
+            # Try to extract first few Chinese characters from content
+            title_prefix = result
+        
+        output_file = save_to_file(result, title_prefix)
         print(f"\nContent saved to {output_file}")
         print("\nFirst 200 characters:\n" + result[:200] + "...")    
